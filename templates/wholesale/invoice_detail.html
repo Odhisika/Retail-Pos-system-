@@ -1,0 +1,202 @@
+{% extends 'base.html' %}
+{% block title %}Invoice {{ invoice.invoice_number }} - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Invoice Details{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <!-- Header -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-6">
+        <div class="flex justify-between items-start mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">{{ invoice.invoice_number }}</h1>
+                <p class="text-sm text-gray-500 mt-1">Issued: {{ invoice.issue_date|date:"M d, Y" }}</p>
+            </div>
+            <div class="flex gap-2">
+                <a href="{% url 'wholesale:invoice_print' invoice.id %}" target="_blank"
+                    class="px-4 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700">
+                    Print Invoice
+                </a>
+                {% if invoice.payment_status != 'paid' and invoice.payment_status != 'cancelled' %}
+                <button onclick="document.getElementById('paymentModal').classList.remove('hidden')"
+                    class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Record Payment
+                </button>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Status Banner -->
+        <div class="mb-6">
+            {% if invoice.payment_status == 'paid' %}
+            <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                <p class="text-green-800 font-semibold">✓ This invoice has been paid in full</p>
+            </div>
+            {% elif invoice.payment_status == 'overdue' %}
+            <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                <p class="text-red-800 font-semibold">
+                    ⚠ This invoice is overdue! Due date was {{ invoice.due_date|date:"M d, Y" }}</p>
+            </div>
+            {% elif invoice.payment_status == 'partial' %}
+            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                <p class="text-yellow-800 font-semibold">
+                    Partially paid - Balance due: {{ site_settings.currency_symbol }}{{ invoice.balance_due }}</p>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Customer & Due Date -->
+        <div class="grid grid-cols-2 gap-6 mb-6">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Bill To:</h3>
+                <p class="text-lg font-semibold text-gray-900">{{ invoice.customer.name }}</p>
+                <p class="text-sm text-gray-600">{{ invoice.customer.phone }}</p>
+                <p class="text-sm text-gray-600">{{ invoice.customer.email }}</p>
+            </div>
+            <div class="text-right">
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Payment Terms:</h3>
+                <p class="text-lg font-semibold text-gray-900">{{ invoice.get_payment_terms_display }}</p>
+                <p class="text-sm text-gray-600">Due Date: {{ invoice.due_date|date:"M d, Y" }}</p>
+                {% if not invoice.is_overdue and invoice.payment_status != 'paid' %}
+                <p class="text-sm text-blue-600">{{ invoice.days_until_due }} days remaining</p>
+                {% endif %}
+            </div>
+        </div>
+
+        <!-- Items Table -->
+        <div class="mb-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Items</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Description</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Unit Price</th>
+                        <th class="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for item in invoice.items.all %}
+                    <tr>
+                        <td class="px-4 py-4 text-sm text-gray-900">{{ item.description }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900 text-right">{{ item.quantity }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900 text-right">
+                            {{ site_settings.currency_symbol }}{{ item.unit_price }}</td>
+                        <td class="px-4 py-4 text-sm font-medium text-gray-900 text-right">
+                            {{ site_settings.currency_symbol }}{{ item.total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Totals -->
+        <div class="flex justify-end">
+            <div class="w-64">
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-600">Subtotal:</span>
+                    <span class="font-medium">{{ site_settings.currency_symbol }}{{ invoice.subtotal }}</span>
+                </div>
+                <div class="flex justify-between py-2">
+                    <span class="text-gray-600">Tax:</span>
+                    <span class="font-medium">{{ site_settings.currency_symbol }}{{ invoice.tax_amount }}</span>
+                </div>
+                {% if invoice.discount_amount > 0 %}
+                <div class="flex justify-between py-2 text-green-600">
+                    <span>Discount:</span>
+                    <span class="font-medium">-{{ site_settings.currency_symbol }}{{ invoice.discount_amount }}</span>
+                </div>
+                {% endif %}
+                <div class="flex justify-between py-2 border-t border-gray-200 text-lg font-bold">
+                    <span>Total:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ invoice.total_amount }}</span>
+                </div>
+                <div class="flex justify-between py-2 text-green-600">
+                    <span>Amount Paid:</span>
+                    <span class="font-medium">{{ site_settings.currency_symbol }}{{ invoice.amount_paid }}</span>
+                </div>
+                <div class="flex justify-between py-2 border-t border-gray-200 text-xl font-bold text-red-600">
+                    <span>Balance Due:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ invoice.balance_due }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment History -->
+        {% if invoice.invoice_payments.exists %}
+        <div class="mt-8">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment History</h3>
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Amount</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Method</th>
+                        <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Recorded By</th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    {% for payment in invoice.invoice_payments.all %}
+                    <tr>
+                        <td class="px-4 py-4 text-sm text-gray-900">{{ payment.payment_date|date:"M d, Y H:i" }}</td>
+                        <td class="px-4 py-4 text-sm font-semibold text-green-600">
+                            {{ site_settings.currency_symbol }}{{ payment.amount }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900">{{ payment.payment.get_method_display }}</td>
+                        <td class="px-4 py-4 text-sm text-gray-900">{{ payment.recorded_by.username }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% endif %}
+
+        {% if invoice.notes %}
+        <div class="mt-6 p-4 bg-gray-50 rounded-lg">
+            <h4 class="text-sm font-medium text-gray-700 mb-2">Notes:</h4>
+            <p class="text-sm text-gray-600">{{ invoice.notes }}</p>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Payment Modal -->
+<div id="paymentModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+    <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4 p-6">
+        <h3 class="text-xl font-bold text-gray-900 mb-4">Record Payment</h3>
+        <form method="post" action="{% url 'wholesale:invoice_record_payment' invoice.id %}">
+            {% csrf_token %}
+            <div class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Amount</label>
+                    <input type="number" name="amount" step="0.01" max="{{ invoice.balance_due }}" required
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <p class="text-sm text-gray-500 mt-1">
+                        Balance due: {{ site_settings.currency_symbol }}{{ invoice.balance_due }}</p>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Payment Method</label>
+                    <select name="payment_method" class="w-full px-4 py-2 border border-gray-300 rounded-lg">
+                        <option value="cash">Cash</option>
+                        <option value="card">Card</option>
+                        <option value="mobile">Mobile Money</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Notes (Optional)</label>
+                    <textarea name="notes" rows="2"
+                        class="w-full px-4 py-2 border border-gray-300 rounded-lg"></textarea>
+                </div>
+            </div>
+            <div class="flex gap-3 mt-6">
+                <button type="button" onclick="document.getElementById('paymentModal').classList.add('hidden')"
+                    class="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                    Cancel
+                </button>
+                <button type="submit" class="flex-1 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                    Record Payment
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

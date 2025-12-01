@@ -1,0 +1,427 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}{{ site_settings.site_name }}{% endblock %}</title>
+
+    <!-- Tailwind CSS CDN for development -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Custom Tailwind Config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            200: '#bae6fd',
+                            300: '#7dd3fc',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                            800: '#075985',
+                            900: '#0c4a6e',
+                        },
+                        dark: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0',
+                            300: '#cbd5e1',
+                            400: '#94a3b8',
+                            500: '#64748b',
+                            600: '#475569',
+                            700: '#334155',
+                            800: '#1e293b',
+                            900: '#0f172a',
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        /* Custom styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        }
+
+        .sidebar-collapsed {
+            width: 4rem !important;
+        }
+
+        .sidebar-collapsed .nav-text {
+            display: none;
+        }
+
+        .sidebar-collapsed #sidebar-text {
+            display: none;
+        }
+
+        .sidebar-collapsed .nav-link {
+            justify-content: center;
+        }
+
+        .sidebar-collapsed .nav-link svg {
+            margin: 0;
+        }
+
+        .fade-in {
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Print styles for receipts */
+        @media print {
+            body * {
+                visibility: hidden;
+            }
+
+            .print-area,
+            .print-area * {
+                visibility: visible;
+            }
+
+            .print-area {
+                position: absolute;
+                left: 0;
+                top: 0;
+                width: 100%;
+            }
+
+            .no-print {
+                display: none !important;
+            }
+        }
+    </style>
+
+    {% block extra_css %}{% endblock %}
+</head>
+
+<body class="bg-gray-50 text-gray-900">
+
+    {% if user.is_authenticated %}
+    <div class="min-h-screen flex">
+        <aside id="sidebar"
+            class="w-64 sidebar-collapsed bg-dark-800 text-gray-300 flex flex-col transition-all duration-200">
+            <div class="flex items-center justify-between px-4 py-4 border-b border-dark-700">
+                <span id="sidebar-text" class="font-bold text-lg"> {{ site_settings.site_name }}</span>
+                <button id="sidebar-toggle" class="text-gray-400 hover:text-white">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M4 6h16M4 12h16M4 18h16"></path>
+                    </svg>
+                </button>
+            </div>
+
+            <!-- Navigation Links -->
+            <nav class="flex-1 overflow-y-auto py-4">
+                <a href="{% url 'core:dashboard' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if request.resolver_match.url_name == 'dashboard' %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">Dashboard</span>
+                </a>
+
+                {% if user.is_cashier %}
+                <a href="{% url 'pos:pos_screen' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if 'pos' in request.path %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">POS</span>
+                    <span class="ml-auto bg-primary-500 text-xs px-2 py-1 rounded nav-text">F1</span>
+                </a>
+
+                <a href="{% url 'wholesale:dashboard' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if request.resolver_match.view_name == 'wholesale:dashboard' %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">Wholesale</span>
+                </a>
+
+                <a href="{% url 'wholesale:invoice_list' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if 'invoices' in request.path %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">Invoices</span>
+                </a>
+                {% endif %}
+
+                <a href="{% url 'catalog:product_list' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if 'catalog' in request.path %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                    <span class="ml-3 nav-text">Products</span>
+                </a>
+
+                <a href="{% url 'customers:customer_list' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if 'customers' in request.path %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">Customers</span>
+                </a>
+
+                {% if user.is_manager %}
+                <a href="{% url 'core:settings' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if request.resolver_match.url_name == 'settings' %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z">
+                        </path>
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                    </svg>
+                    <span class="ml-3 nav-text">Settings</span>
+                </a>
+                {% endif %}
+
+                {% if user.can_access_reports %}
+                <a href="{% url 'reports:dashboard' %}"
+                    class="nav-link flex items-center px-4 py-3 text-gray-300 hover:bg-dark-700 hover:text-white transition-colors {% if 'reports' in request.path %}bg-dark-700 text-white border-l-4 border-primary-500{% endif %}">
+                    <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                            d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z">
+                        </path>
+                    </svg>
+                    <span class="ml-3 nav-text">Reports</span>
+                </a>
+                {% endif %}
+            </nav>
+
+            <!-- User Info & Logout -->
+            <div class="border-t border-dark-700 p-4">
+                <a href="{% url 'core:profile' %}"
+                    class="flex items-center space-x-3 mb-3 hover:bg-dark-700 p-2 rounded-lg transition-colors group">
+                    <div
+                        class="w-10 h-10 bg-primary-500 rounded-full flex items-center justify-center flex-shrink-0 group-hover:ring-2 ring-white">
+                        <span class="text-sm font-bold">{{ user.first_name.0 }}{{ user.last_name.0 }}</span>
+                    </div>
+                    <div class="flex-1 nav-text">
+                        <p class="text-sm font-medium">{{ user.get_full_name }}</p>
+                        <p class="text-xs text-gray-400">{{ user.get_role_display }}</p>
+                    </div>
+                </a>
+                <form action="{% url 'core:logout' %}" method="post" class="w-full">
+                    {% csrf_token %}
+                    <button type="submit"
+                        class="w-full flex items-center px-3 py-2 text-sm text-gray-300 hover:bg-dark-700 hover:text-white rounded-lg transition-colors">
+                        <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1">
+                            </path>
+                        </svg>
+                        <span class="ml-3 nav-text">Logout</span>
+                    </button>
+                </form>
+            </div>
+        </aside>
+
+        <!-- Main Content Area -->
+        <div class="flex-1 flex flex-col overflow-hidden">
+
+            <!-- Top Bar -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4 flex-1">
+                        <h1 class="text-2xl font-semibold text-gray-800">{% block page_title %}Dashboard{% endblock %}
+                        </h1>
+                    </div>
+
+                    <!-- Quick Search -->
+                    <div class="flex items-center space-x-4">
+
+
+                        <!-- Notifications -->
+                        <div class="relative" id="notification-container">
+                            <button id="notification-btn"
+                                class="relative p-2 text-gray-600 hover:text-gray-900 focus:outline-none">
+                                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9">
+                                    </path>
+                                </svg>
+                                {% if recent_sales or recent_customers or recent_products %}
+                                <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full"></span>
+                                {% endif %}
+                            </button>
+
+                            <!-- Dropout Panel -->
+                            <div id="notification-dropdown"
+                                class="hidden absolute right-0 mt-2 w-80 bg-white rounded-xl shadow-lg border border-gray-100 z-50 overflow-hidden">
+                                <div class="p-4 border-b border-gray-100 flex justify-between items-center">
+                                    <h3 class="font-semibold text-gray-900">Recent Activity</h3>
+                                </div>
+                                <div class="max-h-96 overflow-y-auto">
+                                    <!-- Sales -->
+                                    {% if recent_sales %}
+                                    <div class="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">
+                                        Recent Sales</div>
+                                    {% for sale in recent_sales %}
+                                    <a href="#"
+                                        class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0">
+                                        <div class="flex justify-between">
+                                            <span class="text-sm font-medium text-gray-900">{{ sale.reference }}</span>
+                                            <span class="text-xs text-gray-500">{{ sale.created_at|timesince }}
+                                                ago</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            {{ site_settings.currency_symbol }}{{ sale.total }} • {{ sale.items.count }}
+                                            items
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+
+                                    <!-- Customers -->
+                                    {% if recent_customers %}
+                                    <div class="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">New
+                                        Customers</div>
+                                    {% for customer in recent_customers %}
+                                    <a href="{% url 'customers:customer_detail' customer.pk %}"
+                                        class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0">
+                                        <div class="flex justify-between">
+                                            <span class="text-sm font-medium text-gray-900">{{ customer.name }}</span>
+                                            <span class="text-xs text-gray-500">{{ customer.created_at|timesince }}
+                                                ago</span>
+                                        </div>
+                                    </a>
+                                    {% endfor %}
+                                    {% endif %}
+
+                                    <!-- Products -->
+                                    {% if recent_products %}
+                                    <div class="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-500 uppercase">New
+                                        Products</div>
+                                    {% for product in recent_products %}
+                                    <div class="px-4 py-3 hover:bg-gray-50 border-b border-gray-50 last:border-0">
+                                        <div class="flex justify-between">
+                                            <span class="text-sm font-medium text-gray-900">{{ product.name }}</span>
+                                            <span class="text-xs text-gray-500">{{ product.created_at|timesince }}
+                                                ago</span>
+                                        </div>
+                                        <div class="text-xs text-gray-500 mt-1">
+                                            Stock: {{ product.stock }}
+                                        </div>
+                                    </div>
+                                    {% endfor %}
+                                    {% endif %}
+
+                                    {% if not recent_sales and not recent_customers and not recent_products %}
+                                    <div class="p-4 text-center text-gray-500 text-sm">No recent activity</div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Page Content -->
+            <main class="flex-1 overflow-y-auto p-6">
+                <!-- Flash Messages -->
+                {% if messages %}
+                <div class="mb-6 space-y-2">
+                    {% for message in messages %}
+                    <div
+                        class="px-4 py-3 rounded-lg {% if message.tags == 'error' %}bg-red-50 text-red-800 border border-red-200{% elif message.tags == 'success' %}bg-green-50 text-green-800 border border-green-200{% elif message.tags == 'warning' %}bg-yellow-50 text-yellow-800 border border-yellow-200{% else %}bg-blue-50 text-blue-800 border border-blue-200{% endif %} fade-in">
+                        {{ message }}
+                    </div>
+                    {% endfor %}
+                </div>
+                {% endif %}
+
+                {% block content %}{% endblock %}
+            </main>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- Login Page (no sidebar) -->
+    {% block login_content %}{% endblock %}
+    {% endif %}
+
+    <!-- Sidebar Toggle Script -->
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            const sidebar = document.getElementById('sidebar');
+            const toggleBtn = document.getElementById('sidebar-toggle');
+
+            if (toggleBtn) {
+                toggleBtn.addEventListener('click', function () {
+                    sidebar.classList.toggle('sidebar-collapsed');
+                });
+            }
+
+            // Keyboard shortcuts
+            document.addEventListener('keydown', function (e) {
+                // Ctrl+K for search
+                if (e.ctrlKey && e.key === 'k') {
+                    e.preventDefault();
+                    document.querySelector('input[type="text"]').focus();
+                }
+
+                // F1 for POS
+                if (e.key === 'F1') {
+                    e.preventDefault();
+                    const posLink = document.querySelector('a[href*="pos"]');
+                    if (posLink) posLink.click();
+                }
+            });
+
+            // Notification toggle
+            const notifBtn = document.getElementById('notification-btn');
+            const notifDropdown = document.getElementById('notification-dropdown');
+
+            if (notifBtn && notifDropdown) {
+                notifBtn.addEventListener('click', function (e) {
+                    e.stopPropagation();
+                    notifDropdown.classList.toggle('hidden');
+                });
+
+                // Close on click outside
+                document.addEventListener('click', function (e) {
+                    if (!notifBtn.contains(e.target) && !notifDropdown.contains(e.target)) {
+                        notifDropdown.classList.add('hidden');
+                    }
+                });
+            }
+        });
+    </script>
+
+    {% block extra_js %}{% endblock %}
+</body>
+
+</html>

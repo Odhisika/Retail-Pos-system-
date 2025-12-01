@@ -1,0 +1,175 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Customer - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}{{ action }} Customer{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl mx-auto">
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-100 bg-gray-50 flex items-center justify-between">
+            <h2 class="text-lg font-semibold text-gray-900">Customer Information</h2>
+            <a href="{% url 'customers:customer_list' %}" class="text-sm text-gray-600 hover:text-gray-900">Cancel</a>
+        </div>
+
+        <form method="post" class="p-6 space-y-6">
+            {% csrf_token %}
+
+            {% if form.non_field_errors %}
+            <div class="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg">
+                {{ form.non_field_errors }}
+            </div>
+            {% endif %}
+
+            <!-- Basic Info -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                    <label for="{{ form.name.id_for_label }}" class="block text-sm font-medium text-gray-700">Full
+                        Name</label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.name.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.customer_type.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700">Customer Type</label>
+                    {{ form.customer_type }}
+                    {% if form.customer_type.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.customer_type.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-gray-700">Email
+                        Address</label>
+                    {{ form.email }}
+                    {% if form.email.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.email.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.phone.id_for_label }}" class="block text-sm font-medium text-gray-700">Phone
+                        Number</label>
+                    {{ form.phone }}
+                    {% if form.phone.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.phone.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.date_of_birth.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700">Date of Birth</label>
+                    {{ form.date_of_birth }}
+                    {% if form.date_of_birth.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.date_of_birth.errors.0 }}</p>
+                    {% endif %}
+                </div>
+
+                <div>
+                    <label for="{{ form.tags.id_for_label }}"
+                        class="block text-sm font-medium text-gray-700">Tags</label>
+                    {{ form.tags }}
+                    <p class="mt-1 text-xs text-gray-500">Comma separated (e.g. VIP, Regular)</p>
+                    {% if form.tags.errors %}
+                    <p class="mt-1 text-sm text-red-600">{{ form.tags.errors.0 }}</p>
+                    {% endif %}
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">Address Details</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="md:col-span-2">
+                        <label for="{{ form.address_line1.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Address Line 1</label>
+                        {{ form.address_line1 }}
+                        {% if form.address_line1.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.address_line1.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="md:col-span-2">
+                        <label for="{{ form.address_line2.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Address Line 2</label>
+                        {{ form.address_line2 }}
+                        {% if form.address_line2.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.address_line2.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.city.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">City</label>
+                        {{ form.city }}
+                        {% if form.city.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.city.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.state.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">State/Province</label>
+                        {{ form.state }}
+                        {% if form.state.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.state.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.postal_code.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Postal Code</label>
+                        {{ form.postal_code }}
+                        {% if form.postal_code.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.postal_code.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <label for="{{ form.country.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Country</label>
+                        {{ form.country }}
+                        {% if form.country.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.country.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-gray-100 pt-6">
+                <h3 class="text-base font-semibold text-gray-900 mb-4">Additional Information</h3>
+
+                <div class="space-y-4">
+                    <div>
+                        <label for="{{ form.notes.id_for_label }}"
+                            class="block text-sm font-medium text-gray-700">Notes</label>
+                        {{ form.notes }}
+                        {% if form.notes.errors %}
+                        <p class="mt-1 text-sm text-red-600">{{ form.notes.errors.0 }}</p>
+                        {% endif %}
+                    </div>
+
+                    <div class="flex items-center">
+                        {{ form.is_active }}
+                        <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                            Active Customer
+                        </label>
+                    </div>
+                </div>
+            </div>
+
+            <div class="flex justify-end gap-3 pt-6 border-t border-gray-100">
+                <a href="{% url 'customers:customer_list' %}"
+                    class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 font-medium hover:bg-gray-50">
+                    Cancel
+                </a>
+                <button type="submit"
+                    class="px-6 py-2 bg-primary-600 text-white rounded-lg font-semibold hover:bg-primary-700 shadow-sm">
+                    {{ action }} Customer
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

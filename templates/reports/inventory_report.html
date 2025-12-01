@@ -1,0 +1,25 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Inventory Report - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Inventory Report{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div class="text-center py-12">
+        <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10">
+            </path>
+        </svg>
+        <h3 class="mt-4 text-xl font-semibold text-gray-900">Inventory Report Coming Soon</h3>
+        <p class="mt-2 text-gray-600">Detailed inventory status and movement reports will be available here.</p>
+        <div class="mt-6">
+            <a href="{% url 'reports:dashboard' %}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}

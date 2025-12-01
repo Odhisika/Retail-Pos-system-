@@ -1,0 +1,130 @@
+{% extends 'base.html' %}
+
+{% block title %}Sales - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Sales History{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Filters -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-4">
+        <form method="get" class="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div class="col-span-2">
+                <input 
+                    type="text" 
+                    name="search" 
+                    value="{{ search_query }}"
+                    placeholder="Search by reference, customer, or cashier" 
+                    class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                >
+            </div>
+            <div>
+                <select name="status" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500">
+                    <option value="">All Status</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="voided" {% if status_filter == 'voided' %}selected{% endif %}>Voided</option>
+                </select>
+            </div>
+            <div class="flex gap-2">
+                <button type="submit" class="flex-1 bg-gray-900 text-white px-4 py-2 rounded-lg font-semibold hover:bg-gray-800">
+                    Filter
+                </button>
+                <a href="{% url 'pos:sales_list' %}" class="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50">
+                    Clear
+                </a>
+            </div>
+        </form>
+    </div>
+    
+    <!-- Sales Table -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-200">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reference</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cashier</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Payment</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for sale in page_obj %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <a href="{% url 'pos:sale_detail' sale.reference %}" class="font-mono text-sm font-medium text-primary-600 hover:text-primary-700">
+                                {{ sale.reference }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ sale.created_at|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            {% if sale.customer %}{{ sale.customer.name }}{% else %}Walk-in{% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ sale.cashier.get_full_name|default:sale.cashier.username }}
+                        </td>
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900">
+                            {{ site_settings.currency_symbol }}{{ sale.total|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-600">
+                            {{ sale.get_payment_method_display }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full {% if sale.status == 'completed' %}bg-green-100 text-green-800{% elif sale.status == 'voided' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ sale.get_status_display }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex items-center gap-2">
+                                <a href="{% url 'pos:sale_detail' sale.reference %}" class="text-blue-600 hover:text-blue-700" title="View">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path>
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path>
+                                    </svg>
+                                </a>
+                                <a href="{% url 'pos:print_receipt' sale.reference %}" target="_blank" class="text-green-600 hover:text-green-700" title="Print">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+                                    </svg>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="8" class="px-6 py-12 text-center text-gray-500">No sales found</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Pagination -->
+        {% if page_obj.has_other_pages %}
+        <div class="px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+            <div class="text-sm text-gray-600">
+                Showing {{ page_obj.start_index }} to {{ page_obj.end_index }} of {{ page_obj.paginator.count }} sales
+            </div>
+            <div class="flex gap-2">
+                {% if page_obj.has_previous %}
+                <a href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50">Previous</a>
+                {% endif %}
+                <span class="px-3 py-1.5 bg-primary-50 text-primary-700 rounded-lg font-medium">
+                    Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                </span>
+                {% if page_obj.has_next %}
+                <a href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if status_filter %}&status={{ status_filter }}{% endif %}" class="px-3 py-1.5 border border-gray-300 rounded-lg hover:bg-gray-50">Next</a>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

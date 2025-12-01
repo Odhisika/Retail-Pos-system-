@@ -1,0 +1,192 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Customer: {{ customer.name }}{% endblock %}
+
+{% block content %}
+<div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <!-- Customer Info & Payment -->
+    <div class="space-y-6">
+        <!-- Customer Card -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 bg-dark-800 text-white">
+                <div class="flex items-center space-x-4">
+                    <div
+                        class="w-16 h-16 bg-primary-500 rounded-full flex items-center justify-center text-xl font-bold">
+                        {{ customer.name|slice:":2"|upper }}
+                    </div>
+                    <div>
+                        <h2 class="text-xl font-bold">{{ customer.name }}</h2>
+                        <p class="text-gray-300">{{ customer.customer_id }}</p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                    <span class="text-gray-500">Current Balance</span>
+                    <span
+                        class="text-xl font-bold {% if customer.current_balance > 0 %}text-red-600{% else %}text-green-600{% endif %}">
+                        {{ site_settings.currency_symbol }}{{ customer.current_balance }}
+                    </span>
+                </div>
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                    <span class="text-gray-500">Credit Limit</span>
+                    <span class="font-medium">{{ site_settings.currency_symbol }}{{ customer.credit_limit }}</span>
+                </div>
+                <div class="flex justify-between items-center border-b border-gray-100 pb-2">
+                    <span class="text-gray-500">Phone</span>
+                    <span class="font-medium">{{ customer.phone }}</span>
+                </div>
+                <div class="flex justify-between items-center">
+                    <span class="text-gray-500">Email</span>
+                    <span class="font-medium">{{ customer.email }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Make Payment -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Record Payment</h3>
+            <form action="{% url 'wholesale:record_payment' customer.pk %}" method="post" class="space-y-4">
+                {% csrf_token %}
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Amount</label>
+                    <div class="relative rounded-md shadow-sm">
+                        <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                            <span class="text-gray-500 sm:text-sm"></span>
+                        </div>
+                        <input type="number" name="amount" step="0.01" required min="0.01"
+                            class="focus:ring-primary-500 focus:border-primary-500 block w-full pl-7 pr-12 sm:text-sm border-gray-300 rounded-md"
+                            placeholder="0.00">
+                    </div>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Payment Method</label>
+                    <select name="method"
+                        class="mt-1 block w-full pl-3 pr-10 py-2 text-base border-gray-300 focus:outline-none focus:ring-primary-500 focus:border-primary-500 sm:text-sm rounded-md">
+                        <option value="cash">Cash</option>
+                        <option value="mobile">Mobile Money</option>
+                        <option value="check">Check</option>
+                        <option value="bank_transfer">Bank Transfer</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">Note</label>
+                    <textarea name="note" rows="2"
+                        class="shadow-sm focus:ring-primary-500 focus:border-primary-500 block w-full sm:text-sm border-gray-300 rounded-md"></textarea>
+                </div>
+                <button type="submit"
+                    class="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-primary-600 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary-500">
+                    Record Payment
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- History -->
+    <div class="lg:col-span-2 space-y-6">
+        <!-- Unpaid Invoices -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-dark-800 text-white">
+                <h3 class="text-lg font-semibold">Outstanding Sales</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Reference</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Total</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Paid</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Due</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Status</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for sale in credit_sales %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ sale.created_at|date:"M d, Y" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                                {{ sale.reference }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ site_settings.currency_symbol }}{{ sale.total }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600">
+                                {{ site_settings.currency_symbol }}{{ sale.amount_paid }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-bold">
+                                {{ site_settings.currency_symbol }}{{ sale.total|add:"-"|add:sale.amount_paid }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full 
+                                    {% if sale.payment_status == 'pending' %}bg-red-100 text-red-800
+                                    {% elif sale.payment_status == 'partial' %}bg-yellow-100 text-yellow-800
+                                    {% else %}bg-green-100 text-green-800{% endif %}">
+                                    {{ sale.get_payment_status_display }}
+                                </span>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="px-6 py-4 text-center text-sm text-gray-500">No outstanding sales
+                                found.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Recent Payments -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100 bg-gray-50">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Payments</h3>
+            </div>
+            <div class="overflow-x-auto">
+                <table class="min-w-full divide-y divide-gray-200">
+                    <thead class="bg-gray-50">
+                        <tr>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Amount</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Method</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Sale Ref</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                                Note</th>
+                        </tr>
+                    </thead>
+                    <tbody class="bg-white divide-y divide-gray-200">
+                        {% for payment in recent_payments %}
+                        <tr>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ payment.created_at|date:"M d, Y H:i" }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm font-bold text-green-600">
+                                {{ site_settings.currency_symbol }}{{ payment.amount }}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                {{ payment.get_method_display}}</td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ payment.sale.reference }}
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                                {{ payment.notes|truncatechars:30 }}
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="5" class="px-6 py-4 text-center text-sm text-gray-500">No recent payments.</td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

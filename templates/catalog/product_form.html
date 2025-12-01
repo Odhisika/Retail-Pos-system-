@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ action }} Product - {{ site_settings.site_name }}{% endblock %}
+
+{% block content %}
+<div class="max-w-7xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-8 flex items-center justify-between">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900">{{ action }} Product</h1>
+            <p class="mt-2 text-sm text-gray-600">{% if action == 'Create' %}Add a new product to your inventory{% else
+                %}Update product information{% endif %}</p>
+        </div>
+        <a href="{% url 'catalog:product_list' %}"
+            class="flex items-center text-gray-600 hover:text-gray-900 transition-colors">
+            <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18">
+                </path>
+            </svg>
+            Back to Products
+        </a>
+    </div>
+
+    <form method="post" enctype="multipart/form-data" class="space-y-8">
+        {% csrf_token %}
+
+        {% if form.errors %}
+        <div class="bg-red-50 border-l-4 border-red-500 p-4 rounded-r-lg">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <svg class="h-5 w-5 text-red-400" viewBox="0 0 20 20" fill="currentColor">
+                        <path fill-rule="evenodd"
+                            d="M10 18a8 8 0 100-16 8 8 0 000 16zM8.707 7.293a1 1 0 00-1.414 1.414L8.586 10l-1.293 1.293a1 1 0 101.414 1.414L10 11.414l1.293 1.293a1 1 0 001.414-1.414L11.414 10l1.293-1.293a1 1 0 00-1.414-1.414L10 8.586 8.707 7.293z"
+                            clip-rule="evenodd" />
+                    </svg>
+                </div>
+                <div class="ml-3">
+                    <h3 class="text-sm font-medium text-red-800">There were errors with your submission</h3>
+                    <div class="mt-2 text-sm text-red-700">
+                        <ul class="list-disc pl-5 space-y-1">
+                            {% for field in form %}
+                            {% for error in field.errors %}
+                            <li>{{ field.label }}: {{ error }}</li>
+                            {% endfor %}
+                            {% endfor %}
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- Left Column: Basic Info & Inventory -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- Basic Information Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#2C3E50] px-6 py-4">
+                        <h2 class="text-lg font-semibold text-white">Basic Information</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.sku.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                SKU <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.sku }}
+                        </div>
+                        <div>
+                            <label for="{{ form.barcode.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Barcode
+                            </label>
+                            {{ form.barcode }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="{{ form.name.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Product Name <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.name }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <label for="{{ form.description.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Description
+                            </label>
+                            {{ form.description }}
+                        </div>
+                        <div>
+                            <label for="{{ form.category.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Category <span class="text-red-500">*</span>
+                            </label>
+                            {{ form.category }}
+                        </div>
+                        <div>
+                            <label for="{{ form.unit.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Unit
+                            </label>
+                            {{ form.unit }}
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Inventory Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#2C3E50] px-6 py-4">
+                        <h2 class="text-lg font-semibold text-white">Inventory Management</h2>
+                    </div>
+                    <div class="p-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label for="{{ form.stock.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Current Stock
+                            </label>
+                            {{ form.stock }}
+                        </div>
+                        <div>
+                            <label for="{{ form.low_stock_threshold.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Low Stock Alert Threshold
+                            </label>
+                            {{ form.low_stock_threshold }}
+                        </div>
+                        <div class="md:col-span-2">
+                            <div class="flex items-center">
+                                {{ form.track_stock }}
+                                <label for="{{ form.track_stock.id_for_label }}"
+                                    class="ml-2 block text-sm text-gray-900">
+                                    Track inventory for this product
+                                </label>
+                            </div>
+                            <p class="mt-1 text-xs text-gray-500 ml-6">Uncheck for services or non-stock items.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column: Pricing & Image -->
+            <div class="space-y-8">
+                <!-- Pricing Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#2C3E50] px-6 py-4">
+                        <h2 class="text-lg font-semibold text-white">Pricing</h2>
+                    </div>
+                    <div class="p-6 space-y-6">
+                        <div>
+                            <label for="{{ form.cost_price.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Cost Price <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm"></span>
+                                </div>
+                                {{ form.cost_price }}
+                            </div>
+                        </div>
+                        <div>
+                            <label for="{{ form.sell_price.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Selling Price <span class="text-red-500">*</span>
+                            </label>
+                            <div class="relative rounded-md shadow-sm">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <span class="text-gray-500 sm:text-sm"></span>
+                                </div>
+                                {{ form.sell_price }}
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label for="{{ form.wholesale_price.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    Wholesale Price
+                                </label>
+                                <div class="relative rounded-md shadow-sm">
+                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                        <span class="text-gray-500 sm:text-sm"></span>
+                                    </div>
+                                    {{ form.wholesale_price }}
+                                </div>
+                            </div>
+                            <div>
+                                <label for="{{ form.minimum_wholesale_quantity.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700 mb-2">
+                                    Min. Wholesale Qty
+                                </label>
+                                {{ form.minimum_wholesale_quantity }}
+                            </div>
+                        </div>
+                        <div>
+                            <label for="{{ form.tax_rate.id_for_label }}"
+                                class="block text-sm font-medium text-gray-700 mb-2">
+                                Tax Rate
+                            </label>
+                            {{ form.tax_rate }}
+                            <p class="mt-1 text-xs text-gray-500">Decimal format (e.g., 0.15 for 15%)</p>
+                        </div>
+
+                        <!-- Profit Margin Display -->
+                        <div class="bg-gray-50 p-4 rounded-lg border border-gray-200">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm font-medium text-gray-600">Estimated Margin:</span>
+                                <span id="profitMargin" class="text-lg font-bold text-[#2C3E50]">—</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Product Image Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#2C3E50] px-6 py-4">
+                        <h2 class="text-lg font-semibold text-white">Product Image</h2>
+                    </div>
+                    <div class="p-6">
+                        {% if product and product.image %}
+                        <div class="mb-4">
+                            <img src="{{ product.image.url }}" alt="{{ product.name }}"
+                                class="w-full h-48 object-cover rounded-lg border border-gray-200">
+                        </div>
+                        {% endif %}
+                        {{ form.image }}
+                        <p class="mt-2 text-xs text-gray-500">Supported formats: JPG, PNG. Max size: 5MB.</p>
+                    </div>
+                </div>
+
+                <!-- Status Card -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="bg-[#2C3E50] px-6 py-4">
+                        <h2 class="text-lg font-semibold text-white">Status</h2>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex items-center">
+                            {{ form.is_active }}
+                            <label for="{{ form.is_active.id_for_label }}" class="ml-2 block text-sm text-gray-900">
+                                Product is Active
+                            </label>
+                        </div>
+                        <p class="mt-1 text-xs text-gray-500 ml-6">Inactive products won't appear in POS.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-4 pt-6 border-t border-gray-200">
+            <a href="{% url 'catalog:product_list' %}"
+                class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                Cancel
+            </a>
+            <button type="submit"
+                class="px-6 py-3 bg-[#2C3E50] text-white rounded-lg font-semibold hover:bg-[#34495E] transition-colors shadow-lg hover:shadow-xl transform hover:-translate-y-0.5 transition-all">
+                {{ action }} Product
+            </button>
+        </div>
+    </form>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const costInput = document.querySelector('input[name="cost_price"]');
+        const sellInput = document.querySelector('input[name="sell_price"]');
+        const marginDisplay = document.getElementById('profitMargin');
+
+        function calculateMargin() {
+            const cost = parseFloat(costInput.value) || 0;
+            const sell = parseFloat(sellInput.value) || 0;
+
+            if (cost > 0 && sell > 0) {
+                const margin = ((sell - cost) / sell * 100).toFixed(1);
+                marginDisplay.textContent = margin + '%';
+
+                if (margin < 0) {
+                    marginDisplay.classList.add('text-red-600');
+                    marginDisplay.classList.remove('text-[#2C3E50]', 'text-green-600');
+                } else {
+                    marginDisplay.classList.add('text-green-600');
+                    marginDisplay.classList.remove('text-[#2C3E50]', 'text-red-600');
+                }
+            } else {
+                marginDisplay.textContent = '—';
+                marginDisplay.classList.remove('text-red-600', 'text-green-600');
+                marginDisplay.classList.add('text-[#2C3E50]');
+            }
+        }
+
+        if (costInput && sellInput) {
+            costInput.addEventListener('input', calculateMargin);
+            sellInput.addEventListener('input', calculateMargin);
+            // Calculate on load if values exist
+            calculateMargin();
+        }
+    });
+</script>
+{% endblock %}

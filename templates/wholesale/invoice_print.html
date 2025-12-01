@@ -1,0 +1,215 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="UTF-8">
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    <style>
+        @media print {
+            @page {
+                margin: 0.5in;
+            }
+
+            body {
+                margin: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 2px solid #333;
+            padding-bottom: 20px;
+        }
+
+        .invoice-details {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 30px;
+        }
+
+        .customer-info,
+        .invoice-info {
+            flex: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 20px;
+        }
+
+        th,
+        td {
+            padding: 10px;
+            text-align: left;
+            border-bottom: 1px solid #ddd;
+        }
+
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .totals {
+            margin-left: auto;
+            width: 300px;
+        }
+
+        .totals div {
+            display: flex;
+            justify-content: space-between;
+            padding: 5px 0;
+        }
+
+        .total-row {
+            font-size: 1.2em;
+            font-weight: bold;
+            border-top: 2px solid #333;
+            padding-top: 10px;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 10px 20px;
+            background: #007bff;
+            color: white;
+            text-decoration: none;
+            border-radius: 5px;
+            margin-bottom: 20px;
+        }
+
+        .status {
+            display: inline-block;
+            padding: 5px 10px;
+            border-radius: 3px;
+            font-size: 0.9em;
+            font-weight: bold;
+        }
+
+        .status-paid {
+            background: #d4edda;
+            color: #155724;
+        }
+
+        .status-partial {
+            background: #fff3cd;
+            color: #856404;
+        }
+
+        .status-unpaid {
+            background: #f8d7da;
+            color: #721c24;
+        }
+
+        .status-overdue {
+            background: #f8d7da;
+            color: #721c24;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="no-print">
+        <button onclick="window.print()" class="btn">Print Invoice</button>
+    </div>
+
+    <div class="header">
+        <h1>{{ site_settings.site_name }}</h1>
+        <p>{{ site_settings.address }}</p>
+        <p>Phone: {{ site_settings.phone }} | Email: {{ site_settings.email }}</p>
+    </div>
+
+    <h2>INVOICE</h2>
+
+    <div class="invoice-details">
+        <div class="customer-info">
+            <strong>Bill To:</strong><br>
+            {{ invoice.customer.name }}<br>
+            {{ invoice.customer.phone }}<br>
+            {% if invoice.customer.email %}{{ invoice.customer.email }}<br>{% endif %}
+        </div>
+        <div class="invoice-info" style="text-align: right;">
+            <strong>Invoice #:</strong> {{ invoice.invoice_number }}<br>
+            <strong>Issue Date:</strong> {{invoice.issue_date|date:"M d, Y" }}<br>
+            <strong>Due Date:</strong> {{ invoice.due_date|date:"M d, Y" }}<br>
+            <strong>Payment Terms:</strong> {{ invoice.get_payment_terms_display }}<br>
+            <strong>Status:</strong>
+            {% if invoice.payment_status == 'paid' %}
+            <span class="status status-paid">PAID</span>
+            {% elif invoice.payment_status == 'partial' %}
+            <span class="status status-partial">PARTIAL</span>
+            {% elif invoice.payment_status == 'overdue' %}
+            <span class="status status-overdue">OVERDUE</span>
+            {% else %}
+            <span class="status status-unpaid">UNPAID</span>
+            {% endif %}
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Description</th>
+                <th class="text-right">Quantity</th>
+                <th class="text-right">Unit Price</th>
+                <th class="text-right">Total</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for item in invoice.items.all %}
+            <tr>
+                <td>{{ item.description }}</td>
+                <td class="text-right">{{ item.quantity }}</td>
+                <td class="text-right">{{ site_settings.currency_symbol }}{{ item.unit_price }}</td>
+                <td class="text-right">{{ site_settings.currency_symbol }}{{ item.total }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <div class="totals">
+        <div><span>Subtotal:</span><span>{{ site_settings.currency_symbol }}{{ invoice.subtotal }}</span></div>
+        <div><span>Tax:</span><span>{{ site_settings.currency_symbol }}{{ invoice.tax_amount }}</span></div>
+        {% if invoice.discount_amount > 0 %}
+        <div style="color: green;"><span>Discount:</span><span>
+                -{{ site_settings.currency_symbol }}{{ invoice.discount_amount }}</span></div>
+        {% endif %}
+        <div class="total-row"><span>Total:</span><span>
+                {{ site_settings.currency_symbol }}{{ invoice.total_amount }}</span></div>
+        <div style="color: green;"><span>Amount Paid:</span><span>
+                {{ site_settings.currency_symbol }}{{ invoice.amount_paid }}</span></div>
+        <div class="total-row" style="color: red;"><span>Balance Due:</span><span>
+                {{ site_settings.currency_symbol }}{{ invoice.balance_due }}</span></div>
+    </div>
+
+    {% if invoice.notes %}
+    <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-left: 3px solid #007bff;">
+        <strong>Notes:</strong><br>
+        {{ invoice.notes }}
+    </div>
+    {% endif %}
+
+    <div style="margin-top: 50px; text-align: center; color: #666; font-size: 0.9em;">
+        <p>Thank you for your business!</p>
+        <p>Please make payment by {{ invoice.due_date|date:"M d, Y" }}</p>
+    </div>
+</body>
+
+</html>

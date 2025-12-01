@@ -1,0 +1,195 @@
+{% extends 'base.html' %}
+
+{% block page_title %}Site Settings{% endblock %}
+
+{% block content %}
+<div class="max-w-5xl mx-auto">
+    <!-- Page Header -->
+    <div class="mb-6">
+        <h1 class="text-3xl font-bold text-gray-900">Site Settings</h1>
+        <p class="text-gray-600 mt-2">Configure store information, tax rates, and system preferences</p>
+    </div>
+
+    <form method="post" class="space-y-6">
+        {% csrf_token %}
+
+        <!-- Store Information Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Store Information</h3>
+                <p class="text-sm text-gray-500 mt-1">This information appears on receipts and invoices</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Site Name
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.site_name }}
+                        <p class="text-xs text-gray-500 mt-1">Internal name for your POS system</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Store Name
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.store_name }}
+                        <p class="text-xs text-gray-500 mt-1">Displayed on receipts and invoices</p>
+                    </div>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Store Address
+                        <span class="text-red-500">*</span>
+                    </label>
+                    {{ form.store_address }}
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Phone Number
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.store_phone }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Email Address
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.store_email }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tax & Currency Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Tax & Currency</h3>
+                <p class="text-sm text-gray-500 mt-1">Configure pricing and tax settings</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Tax Rate
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.tax_rate }}
+                        {% if form.tax_rate.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.tax_rate.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Currency Symbol
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.currency_symbol }}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Currency Code
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.currency_code }}
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Receipt Settings Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">Receipt Settings</h3>
+                <p class="text-sm text-gray-500 mt-1">Customize receipt footer message</p>
+            </div>
+            <div class="p-6">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        Receipt Footer
+                    </label>
+                    {{ form.receipt_footer }}
+                    <p class="text-xs text-gray-500 mt-1">Thank you message shown at the bottom of receipts</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- System Settings Section -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+            <div class="p-6 border-b border-gray-100">
+                <h3 class="text-lg font-semibold text-gray-900">System Settings</h3>
+                <p class="text-sm text-gray-500 mt-1">Configure inventory and system behavior</p>
+            </div>
+            <div class="p-6 space-y-4">
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Low Stock Threshold
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.low_stock_threshold }}
+                        {% if form.low_stock_threshold.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.low_stock_threshold.help_text }}</p>
+                        {% endif %}
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            Auto Logout Minutes
+                            <span class="text-red-500">*</span>
+                        </label>
+                        {{ form.auto_logout_minutes }}
+                        {% if form.auto_logout_minutes.help_text %}
+                        <p class="text-xs text-gray-500 mt-1">{{ form.auto_logout_minutes.help_text }}</p>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <div class="space-y-3 pt-2">
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            {{ form.enable_barcode_scanner }}
+                        </div>
+                        <div class="ml-3">
+                            <label for="{{ form.enable_barcode_scanner.id_for_label }}"
+                                class="font-medium text-gray-700">
+                                Enable Barcode Scanner
+                            </label>
+                            <p class="text-xs text-gray-500">Allow barcode scanning for product lookup</p>
+                        </div>
+                    </div>
+
+                    <div class="flex items-center">
+                        <div class="flex items-center h-5">
+                            {{ form.enable_customer_loyalty }}
+                        </div>
+                        <div class="ml-3">
+                            <label for="{{ form.enable_customer_loyalty.id_for_label }}"
+                                class="font-medium text-gray-700">
+                                Enable Customer Loyalty
+                            </label>
+                            <p class="text-xs text-gray-500">Track customer purchases and loyalty points</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Form Actions -->
+        <div class="flex justify-end space-x-3">
+            <a href="{% url 'core:dashboard' %}"
+                class="px-6 py-3 bg-gray-100 text-gray-700 rounded-lg font-semibold hover:bg-gray-200 transition-colors">
+                Cancel
+            </a>
+            <button type="submit"
+                class="px-6 py-3 bg-gray-800 text-white rounded-lg font-semibold hover:bg-gray-900 transition-colors">
+                Save Settings
+            </button>
+        </div>
+    </form>
+</div>
+{% endblock %}

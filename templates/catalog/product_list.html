@@ -1,0 +1,102 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Products{% endblock %}
+
+{% block content %}
+<div class="p-6">
+    <div class="mb-6 flex justify-between items-center">
+        <h1 class="text-2xl font-bold text-gray-900">Products</h1>
+        {% if user.can_manage_products %}
+        <div class="flex gap-3">
+            <a href="{% url 'catalog:product_export' %}"
+                class="bg-white border border-gray-300 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors">Export</a>
+            <a href="{% url 'catalog:product_create' %}"
+                class="bg-[#2C3E50] text-white px-4 py-2 rounded-lg hover:bg-[#34495E] transition-colors">Add
+                Product</a>
+        </div>
+        {% endif %}
+    </div>
+
+    <div class="bg-white p-4 rounded-lg shadow-sm mb-4">
+        <form method="get" class="grid grid-cols-4 gap-4">
+            <input type="text" name="search" value="{{ search_query }}" placeholder="Search by SKU or name"
+                class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-[#2C3E50] focus:border-[#2C3E50]">
+            <select name="category"
+                class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-[#2C3E50] focus:border-[#2C3E50]">
+                <option value="">All Categories</option>
+                {% for cat in categories %}
+                <option value="{{ cat.id }}">{{ cat.name }}</option>
+                {% endfor %}
+            </select>
+            <select name="status"
+                class="border border-gray-300 px-4 py-2 rounded-lg focus:ring-2 focus:ring-[#2C3E50] focus:border-[#2C3E50]">
+                <option value="">All Status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+            </select>
+            <button type="submit"
+                class="bg-[#2C3E50] text-white px-4 py-2 rounded-lg hover:bg-[#34495E] transition-colors font-semibold">Filter</button>
+        </form>
+    </div>
+
+    <div class="bg-white rounded-lg shadow-sm overflow-hidden">
+        <table class="w-full">
+            <thead class="bg-gray-50 border-b">
+                <tr>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">Product</th>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">SKU</th>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">Category</th>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">Price</th>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">Stock</th>
+                    <th class="p-4 text-left text-sm font-semibold text-gray-700">Actions</th>
+                </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+                {% for product in page_obj %}
+                <tr class="hover:bg-gray-50">
+                    <td class="p-4">
+                        <div class="font-medium text-gray-900">{{ product.name }}</div>
+                        {% if product.barcode %}
+                        <div class="text-xs text-gray-500">Barcode: {{ product.barcode }}</div>
+                        {% endif %}
+                    </td>
+                    <td class="p-4 text-sm text-gray-900 font-mono">{{ product.sku }}</td>
+                    <td class="p-4 text-sm text-gray-600">{{ product.category.name }}</td>
+                    <td class="p-4 text-sm font-semibold text-gray-900">
+                        {{ site_settings.currency_symbol }}{{ product.sell_price }}</td>
+                    <td class="p-4 text-sm">
+                        <span
+                            class="{% if product.is_low_stock %}text-red-600 font-semibold{% else %}text-gray-900{% endif %}">
+                            {{ product.stock }}
+                        </span>
+                    </td>
+                    <td class="p-4">
+                        <div class="flex items-center gap-2">
+                            <a href="{% url 'catalog:product_detail' product.pk %}"
+                                class="text-blue-600 hover:text-blue-700 font-medium" title="View">View</a>
+                            {% if user.can_manage_products %}
+                            <a href="{% url 'catalog:product_update' product.pk %}"
+                                class="text-green-600 hover:text-green-700 font-medium" title="Edit">Edit</a>
+                            <a href="{% url 'catalog:product_delete' product.pk %}"
+                                class="text-red-600 hover:text-red-700 font-medium" title="Delete">Delete</a>
+                            {% endif %}
+                        </div>
+                    </td>
+                </tr>
+                {% empty %}
+                <tr>
+                    <td colspan="6" class="p-8 text-center text-gray-500">
+                        <p class="text-lg mb-2">No products found</p>
+                        {% if user.can_manage_products %}
+                        <a href="{% url 'catalog:product_create' %}" class="text-[#2C3E50] hover:underline">Add your
+                            first product</a>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endblock %}

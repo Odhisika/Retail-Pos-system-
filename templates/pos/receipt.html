@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Receipt - {{ sale.reference }}</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Courier New', monospace;
+            padding: 20px;
+            max-width: 80mm;
+            margin: 0 auto;
+        }
+
+        .receipt {
+            background: white;
+            padding: 10px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+            border-bottom: 2px dashed #000;
+            padding-bottom: 15px;
+        }
+
+        .store-name {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 5px;
+        }
+
+        .store-info {
+            font-size: 11px;
+            line-height: 1.4;
+        }
+
+        .section {
+            margin: 15px 0;
+            padding: 10px 0;
+            border-bottom: 1px dashed #ccc;
+        }
+
+        .section:last-child {
+            border-bottom: 2px dashed #000;
+        }
+
+        .section-title {
+            font-weight: bold;
+            font-size: 12px;
+            margin-bottom: 8px;
+            text-transform: uppercase;
+        }
+
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 11px;
+            margin: 4px 0;
+        }
+
+        .customer-info {
+            font-size: 11px;
+            line-height: 1.5;
+        }
+
+        table {
+            width: 100%;
+            font-size: 11px;
+            border-collapse: collapse;
+            margin: 10px 0;
+        }
+
+        th {
+            text-align: left;
+            padding: 5px 0;
+            border-bottom: 1px solid #000;
+            font-weight: bold;
+        }
+
+        td {
+            padding: 5px 0;
+        }
+
+        .text-right {
+            text-align: right;
+        }
+
+        .item-name {
+            font-weight: bold;
+        }
+
+        .totals {
+            margin-top: 15px;
+        }
+
+        .totals-row {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            margin: 5px 0;
+        }
+
+        .totals-row.grand-total {
+            font-size: 14px;
+            font-weight: bold;
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #000;
+        }
+
+        .payment-info {
+            margin: 15px 0;
+            font-size: 11px;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 20px;
+            padding-top: 15px;
+            border-top: 2px dashed #000;
+            font-size: 11px;
+        }
+
+        .thank-you {
+            font-weight: bold;
+            font-size: 13px;
+            margin-bottom: 10px;
+        }
+
+        @media print {
+            body {
+                padding: 0;
+            }
+
+            .no-print {
+                display: none;
+            }
+
+            @page {
+                size: 80mm auto;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <div class="receipt">
+        <!-- Header -->
+        <div class="header">
+            <div class="store-name">{{ site_settings.site_name }}</div>
+            <div class="store-info">
+                {% if site_settings.address %}{{ site_settings.address }}<br>{% endif %}
+                {% if site_settings.phone %}Tel: {{ site_settings.phone }}<br>{% endif %}
+                {% if site_settings.email %}Email: {{ site_settings.email }}{% endif %}
+            </div>
+        </div>
+
+        <!-- Sale Information -->
+        <div class="section">
+            <div class="info-row">
+                <span>Receipt #:</span>
+                <span><strong>{{ sale.reference }}</strong></span>
+            </div>
+            <div class="info-row">
+                <span>Date:</span>
+                <span>{{ sale.created_at|date:"Y-m-d H:i" }}</span>
+            </div>
+            <div class="info-row">
+                <span>Cashier:</span>
+                <span>{{ sale.cashier.get_full_name|default:sale.cashier.username }}</span>
+            </div>
+            {% if sale.terminal_id %}
+            <div class="info-row">
+                <span>Terminal:</span>
+                <span>{{ sale.terminal_id }}</span>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Customer Information -->
+        {% if sale.customer %}
+        <div class="section">
+            <div class="section-title">Customer Details</div>
+            <div class="customer-info">
+                <strong>{{ sale.customer.name }}</strong><br>
+                Phone: {{ sale.customer.phone }}<br>
+                {% if sale.customer.email %}Email: {{ sale.customer.email }}<br>{% endif %}
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Items -->
+        <div class="section">
+            <div class="section-title">Items Purchased</div>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Item</th>
+                        <th class="text-right">Qty</th>
+                        <th class="text-right">Price</th>
+                        <th class="text-right">Total</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in sale.items.all %}
+                    <tr>
+                        <td class="item-name">{{ item.product.name }}</td>
+                        <td class="text-right">{{ item.quantity }}</td>
+                        <td class="text-right">{{ site_settings.currency_symbol }}{{ item.unit_price|floatformat:2 }}
+                        </td>
+                        <td class="text-right">{{ site_settings.currency_symbol }}{{ item.line_total|floatformat:2 }}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+
+            <!-- Totals -->
+            <div class="totals">
+                <div class="totals-row">
+                    <span>Subtotal:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ sale.subtotal|floatformat:2 }}</span>
+                </div>
+                {% if sale.tax > 0 %}
+                <div class="totals-row">
+                    <span>Tax:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ sale.tax|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                {% if sale.discount > 0 %}
+                <div class="totals-row">
+                    <span>Discount:</span>
+                    <span>-{{ site_settings.currency_symbol }}{{ sale.discount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                <div class="totals-row grand-total">
+                    <span>TOTAL:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ sale.total|floatformat:2 }}</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payment Information -->
+        <div class="section">
+            <div class="section-title">Payment Details</div>
+            {% for payment in sale.payments.all %}
+            <div class="payment-info">
+                <div class="info-row">
+                    <span>Method:</span>
+                    <span><strong>{{ payment.get_method_display }}</strong></span>
+                </div>
+                <div class="info-row">
+                    <span>Amount:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ payment.amount|floatformat:2 }}</span>
+                </div>
+                {% if payment.method == 'cash' and payment.amount_tendered %}
+                <div class="info-row">
+                    <span>Tendered:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ payment.amount_tendered|floatformat:2 }}</span>
+                </div>
+                <div class="info-row">
+                    <span>Change:</span>
+                    <span>{{ site_settings.currency_symbol }}{{ payment.change_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+
+        <!-- Footer -->
+        <div class="footer">
+            <div class="thank-you">Thank You for Your Purchase!</div>
+            <div>Please visit us again</div>
+            {% if site_settings.website %}
+            <div style="margin-top: 8px;">{{ site_settings.website }}</div>
+            {% endif %}
+        </div>
+    </div>
+
+    <div class="no-print" style="text-align: center; margin-top: 20px;">
+        <button onclick="window.print()"
+            style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #2C3E50; color: white; border: none; border-radius: 5px;">
+            Print Receipt
+        </button>
+        <button onclick="window.close()"
+            style="padding: 10px 20px; font-size: 14px; cursor: pointer; background: #ccc; color: #333; border: none; border-radius: 5px; margin-left: 10px;">
+            Close
+        </button>
+    </div>
+
+    <script>
+        // Auto-print on load (optional)
+        // window.onload = function() {
+        //   window.print();
+        // };
+    </script>
+</body>
+
+</html>

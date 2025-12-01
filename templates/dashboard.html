@@ -1,0 +1,210 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - {{ site_settings.site_name }}{% endblock %}
+
+{% block page_title %}Dashboard{% endblock %}
+
+{% block content %}
+<div class="space-y-6">
+    
+    <!-- Metric Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        
+        <!-- Weekly Revenue -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <span class="text-sm font-medium {% if revenue_change >= 0 %}text-green-600{% else %}text-red-600{% endif %}">
+                    {% if revenue_change >= 0 %}+{% endif %}{{ revenue_change|floatformat:1 }}%
+                </span>
+            </div>
+            <h3 class="text-gray-600 text-sm font-medium">Weekly Revenue</h3>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ site_settings.currency_symbol }}{{ weekly_revenue|floatformat:2 }}</p>
+            <p class="text-xs text-gray-500 mt-1">Last 7 days</p>
+        </div>
+        
+        <!-- Total Customers -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-blue-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-600 text-sm font-medium">Total Customers</h3>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ total_customers|default:0 }}</p>
+            <a href="{% url 'customers:customer_list' %}" class="text-xs text-blue-600 hover:text-blue-700 mt-1 inline-block">View all →</a>
+        </div>
+        
+        <!-- Low Stock Items -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-orange-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+                    </svg>
+                </div>
+                {% if low_stock_items > 0 %}
+                <span class="text-sm font-medium text-orange-600">Alert</span>
+                {% endif %}
+            </div>
+            <h3 class="text-gray-600 text-sm font-medium">Low Stock Items</h3>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ low_stock_items|default:0 }}</p>
+            <a href="{% url 'catalog:product_list' %}?status=low_stock" class="text-xs text-orange-600 hover:text-orange-700 mt-1 inline-block">View items →</a>
+        </div>
+        
+        <!-- Inventory Value -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100 hover:shadow-md transition-shadow">
+            <div class="flex items-center justify-between mb-4">
+                <div class="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center">
+                    <svg class="w-6 h-6 text-purple-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+                    </svg>
+                </div>
+            </div>
+            <h3 class="text-gray-600 text-sm font-medium">Inventory Value</h3>
+            <p class="text-3xl font-bold text-gray-900 mt-2">{{ site_settings.currency_symbol }}{{ inventory_value|floatformat:2 }}</p>
+            <a href="{% url 'catalog:product_list' %}" class="text-xs text-purple-600 hover:text-purple-700 mt-1 inline-block">View products →</a>
+        </div>
+    </div>
+    
+    <!-- Charts and Tables Row -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        
+        <!-- Sales Chart -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Sales This Week</h3>
+            <div class="h-64">
+                <canvas id="salesChart"></canvas>
+            </div>
+        </div>
+        
+        <!-- Top Products -->
+        <div class="bg-white rounded-2xl shadow-sm p-6 border border-gray-100">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Top Selling Products</h3>
+            <div class="space-y-3">
+                {% for product in top_products %}
+                <div class="flex items-center justify-between py-2 border-b border-gray-100 last:border-0">
+                    <div class="flex-1">
+                        <p class="font-medium text-gray-900">{{ product.product__name }}</p>
+                        <p class="text-sm text-gray-500">{{ product.product__sku }}</p>
+                    </div>
+                    <div class="text-right">
+                        <p class="font-semibold text-gray-900">{{ product.quantity_sold }} sold</p>
+                        <p class="text-sm text-gray-500">{{ site_settings.currency_symbol }}{{ product.revenue|floatformat:2 }}</p>
+                    </div>
+                </div>
+                {% empty %}
+                <p class="text-gray-500 text-center py-8">No sales data available</p>
+                {% endfor %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recent Sales -->
+    <div class="bg-white rounded-2xl shadow-sm border border-gray-100">
+        <div class="p-6 border-b border-gray-100">
+            <div class="flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-gray-900">Recent Sales</h3>
+                <a href="{% url 'pos:sales_list' %}" class="text-sm text-primary-600 hover:text-primary-700 font-medium">View all →</a>
+            </div>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Reference</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Customer</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cashier</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for sale in recent_sales %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <a href="{% url 'pos:sale_detail' sale.reference %}" class="text-sm font-medium text-primary-600 hover:text-primary-700">
+                                {{ sale.reference }}
+                            </a>
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ sale.created_at|date:"M d, Y H:i" }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                            {% if sale.customer %}{{ sale.customer.name }}{% else %}Walk-in{% endif %}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
+                            {{ sale.cashier.get_full_name|default:sale.cashier.username }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
+                            {{ site_settings.currency_symbol }}{{ sale.total|floatformat:2 }}
+                        </td>
+                        <td class="px-6 py-4 whitespace-nowrap">
+                            <span class="px-2 py-1 text-xs font-semibold rounded-full {% if sale.status == 'completed' %}bg-green-100 text-green-800{% elif sale.status == 'voided' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                                {{ sale.get_status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% empty %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            No recent sales
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script>
+    // Sales Chart
+    const ctx = document.getElementById('salesChart');
+    const dailySales = {{ daily_sales|safe }};
+    
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: dailySales.map(d => d.date),
+            datasets: [{
+                label: 'Sales',
+                data: dailySales.map(d => d.total),
+                borderColor: '#6366f1',
+                backgroundColor: 'rgba(99, 102, 241, 0.1)',
+                tension: 0.4,
+                fill: true
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    display: false
+                }
+            },
+            scales: {
+                y: {
+                    beginAtZero: true,
+                    ticks: {
+                        callback: function(value) {
+                            return '{{ site_settings.currency_symbol }}' + value.toFixed(2);
+                        }
+                    }
+                }
+            }
+        }
+    });
+</script>
+{% endblock %}

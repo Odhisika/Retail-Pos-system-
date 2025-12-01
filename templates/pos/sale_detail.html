@@ -1,0 +1,152 @@
+{% extends 'base.html' %}
+
+{% block title %}Sale {{ sale.reference }} - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Sale Details{% endblock %}
+
+{% block content %}
+<div class="max-w-4xl">
+    
+    <!-- Back Button -->
+    <div class="mb-6 flex items-center justify-between">
+        <a href="{% url 'pos:sales_list' %}" class="text-gray-600 hover:text-gray-900 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"></path>
+            </svg>
+            Back to Sales
+        </a>
+        <a href="{% url 'pos:print_receipt' sale.reference %}" target="_blank" class="bg-primary-600 text-white px-4 py-2.5 rounded-lg font-semibold hover:bg-primary-700 flex items-center gap-2">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path>
+            </svg>
+            Print Receipt
+        </a>
+    </div>
+    
+    <!-- Sale Header -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6 mb-6">
+        <div class="flex items-start justify-between mb-6">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 mb-2">{{ sale.reference }}</h1>
+                <p class="text-gray-600">{{ sale.created_at|date:"F d, Y \a\t H:i" }}</p>
+            </div>
+            <span class="px-4 py-2 text-sm font-semibold rounded-full {% if sale.status == 'completed' %}bg-green-100 text-green-800{% elif sale.status == 'voided' %}bg-red-100 text-red-800{% else %}bg-yellow-100 text-yellow-800{% endif %}">
+                {{ sale.get_status_display }}
+            </span>
+        </div>
+        
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Customer</h3>
+                {% if sale.customer %}
+                <p class="text-lg font-semibold text-gray-900">{{ sale.customer.name }}</p>
+                <p class="text-sm text-gray-600">{{ sale.customer.phone }}</p>
+                <p class="text-sm text-gray-600">{{ sale.customer.email }}</p>
+                {% else %}
+                <p class="text-lg font-semibold text-gray-900">Walk-in Customer</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Cashier</h3>
+                <p class="text-lg font-semibold text-gray-900">{{ sale.cashier.get_full_name|default:sale.cashier.username }}</p>
+                <p class="text-sm text-gray-600">{{ sale.cashier.email }}</p>
+                {% if sale.terminal_id %}
+                <p class="text-sm text-gray-600">Terminal: {{ sale.terminal_id }}</p>
+                {% endif %}
+            </div>
+            
+            <div>
+                <h3 class="text-sm font-medium text-gray-500 mb-2">Payment</h3>
+                <p class="text-lg font-semibold text-gray-900">{{ sale.get_payment_method_display }}</p>
+                {% if sale.completed_at %}
+                <p class="text-sm text-gray-600">Completed: {{ sale.completed_at|date:"M d, Y H:i" }}</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Sale Items -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden mb-6">
+        <div class="p-6 border-b">
+            <h2 class="text-xl font-semibold text-gray-900">Items</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Product</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">SKU</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Price</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Qty</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tax</th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase">Total</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                    {% for item in sale.items.all %}
+                    <tr>
+                        <td class="px-6 py-4 text-sm font-medium text-gray-900">{{ item.product.name }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 font-mono">{{ item.product.sku }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 text-right">{{ site_settings.currency_symbol }}{{ item.unit_price }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-900 text-right">{{ item.quantity }}</td>
+                        <td class="px-6 py-4 text-sm text-gray-600 text-right">{{ site_settings.currency_symbol }}{{ item.tax_amount|floatformat:2 }}</td>
+                        <td class="px-6 py-4 text-sm font-semibold text-gray-900 text-right">{{ site_settings.currency_symbol }}{{ item.line_total }}</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <!-- Totals -->
+    <div class="bg-white rounded-xl shadow-sm border border-gray-100 p-6">
+        <div class="max-w-md ml-auto space-y-3">
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Subtotal</span>
+                <span class="font-medium">{{ site_settings.currency_symbol }}{{ sale.subtotal|floatformat:2 }}</span>
+            </div>
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Tax</span>
+                <span class="font-medium">{{ site_settings.currency_symbol }}{{ sale.tax|floatformat:2 }}</span>
+            </div>
+            {% if sale.discount > 0 %}
+            <div class="flex justify-between text-sm">
+                <span class="text-gray-600">Discount</span>
+                <span class="font-medium text-red-600">-{{ site_settings.currency_symbol }}{{ sale.discount|floatformat:2 }}</span>
+            </div>
+            {% endif %}
+            <div class="flex justify-between text-xl font-bold pt-3 border-t border-gray-200">
+                <span>Total</span>
+                <span class="text-primary-600">{{ site_settings.currency_symbol }}{{ sale.total|floatformat:2 }}</span>
+            </div>
+        </div>
+        
+        <!-- Payment Details -->
+        {% if sale.payments.all %}
+        <div class="mt-6 pt-6 border-t">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Payment Details</h3>
+            {% for payment in sale.payments.all %}
+            <div class="bg-gray-50 rounded-lg p-4 mb-3">
+                <div class="flex justify-between items-center mb-2">
+                    <span class="font-medium">{{ payment.get_method_display }}</span>
+                    <span class="font-semibold text-lg">{{ site_settings.currency_symbol }}{{ payment.amount|floatformat:2 }}</span>
+                </div>
+                {% if payment.amount_tendered %}
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Amount Tendered</span>
+                    <span>{{ site_settings.currency_symbol }}{{ payment.amount_tendered|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+                {% if payment.change_amount %}
+                <div class="flex justify-between text-sm text-gray-600">
+                    <span>Change</span>
+                    <span>{{ site_settings.currency_symbol }}{{ payment.change_amount|floatformat:2 }}</span>
+                </div>
+                {% endif %}
+            </div>
+            {% endfor %}
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

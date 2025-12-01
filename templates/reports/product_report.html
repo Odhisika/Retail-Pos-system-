@@ -1,0 +1,24 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Product Report - {{ site_settings.site_name }}{% endblock %}
+{% block page_title %}Product Report{% endblock %}
+
+{% block content %}
+<div class="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
+    <div class="text-center py-12">
+        <svg class="mx-auto h-24 w-24 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4"></path>
+        </svg>
+        <h3 class="mt-4 text-xl font-semibold text-gray-900">Product Report Coming Soon</h3>
+        <p class="mt-2 text-gray-600">Detailed product performance analytics will be available here.</p>
+        <div class="mt-6">
+            <a href="{% url 'reports:dashboard' %}"
+                class="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md shadow-sm text-white bg-blue-600 hover:bg-blue-700">
+                ← Back to Dashboard
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
