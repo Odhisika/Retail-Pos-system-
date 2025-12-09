@@ -9,13 +9,13 @@ from django.contrib.auth.decorators import login_required
 from django.contrib import messages
 from django.db.models import Q, Sum, Count
 from django.core.paginator import Paginator
-from django.http import JsonResponse
-from django.views.decorators.http import require_http_methods
-import json
 
 from .models import Customer, CustomerNote
 from .forms import CustomerForm
 from pos.models import Sale
+from django.http import JsonResponse
+from django.views.decorators.http import require_http_methods
+import json
 
 
 class CustomerViewSet(viewsets.ModelViewSet):
@@ -176,8 +176,6 @@ def customer_delete(request, pk):
         'customer': customer,
     }
     return render(request, 'customers/customer_confirm_delete.html', context)
-
-
 @require_http_methods(["POST"])
 @login_required
 def register_customer_api(request):
