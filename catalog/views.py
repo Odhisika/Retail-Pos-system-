@@ -370,3 +370,44 @@ def product_import(request):
     # The modal is in the product list page. This view is primarily for POST.
     # But if accessed directly, redirect to list.
     return redirect('catalog:product_list')
+@login_required
+def category_create_ajax(request):
+    """AJAX endpoint to create a category from the product form"""
+    from django.http import JsonResponse
+    
+    if not request.user.can_manage_products:
+        return JsonResponse({
+            'success': False,
+            'errors': {'permission': ['You don''t have permission to create categories.']}
+        }, status=403)
+    
+    if request.method == 'POST':
+        form = CategoryForm(request.POST)
+        if form.is_valid():
+            category = form.save()
+            
+            # Log the action
+            from core.models import AuditLog
+            AuditLog.log(
+                user=request.user,
+                action=AuditLog.Action.CREATE_PRODUCT,
+                description=f"Created category: {category.name}"
+            )
+            
+            return JsonResponse({
+                'success': True,
+                'category': {
+                    'id': category.id,
+                    'name': category.name
+                }
+            })
+        else:
+            return JsonResponse({
+                'success': False,
+                'errors': form.errors
+            }, status=400)
+    
+    return JsonResponse({
+        'success': False,
+        'errors': {'method': ['Invalid request method']}
+    }, status=405)

@@ -88,10 +88,20 @@
                             {{ form.description }}
                         </div>
                         <div>
-                            <label for="{{ form.category.id_for_label }}"
-                                class="block text-sm font-medium text-gray-700 mb-2">
-                                Category <span class="text-red-500">*</span>
-                            </label>
+                            <div class="flex items-center justify-between mb-2">
+                                <label for="{{ form.category.id_for_label }}"
+                                    class="block text-sm font-medium text-gray-700">
+                                    Category <span class="text-red-500">*</span>
+                                </label>
+                                <button type="button" id="openCategoryModalBtn"
+                                    class="inline-flex items-center px-3 py-1 text-xs font-medium text-white bg-[#2C3E50] rounded-lg hover:bg-[#34495E] transition-colors">
+                                    <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M12 4v16m8-8H4"></path>
+                                    </svg>
+                                    New Category
+                                </button>
+                            </div>
                             {{ form.category }}
                         </div>
                         <div>
@@ -258,6 +268,62 @@
         </div>
     </form>
 </div>
+</div>
+<!-- Category Creation Modal -->
+<div id="categoryModal" class="fixed inset-0 bg-gray-600 bg-opacity-50 hidden overflow-y-auto h-full w-full z-50">
+    <div class="relative top-20 mx-auto p-5 border w-full max-w-md shadow-lg rounded-lg bg-white">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-900">Create New Category</h3>
+            <button type="button" id="closeCategoryModalBtn" class="text-gray-400 hover:text-gray-600">
+                <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12">
+                    </path>
+                </svg>
+            </button>
+        </div>
+
+        <form id="categoryForm" class="space-y-4">
+            <div id="categoryFormErrors"
+                class="hidden bg-red-50 border-l-4 border-red-500 p-3 rounded text-sm text-red-700"></div>
+
+            <div>
+                <label for="categoryName" class="block text-sm font-medium text-gray-700 mb-2">
+                    Category Name <span class="text-red-500">*</span>
+                </label>
+                <input type="text" id="categoryName" name="name" required
+                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#2C3E50] focus:ring-[#2C3E50] sm:text-sm px-4 py-3">
+            </div>
+
+            <div>
+                <label for="categoryDescription" class="block text-sm font-medium text-gray-700 mb-2">
+                    Description
+                </label>
+                <textarea id="categoryDescription" name="description" rows="3"
+                    class="mt-1 block w-full rounded-lg border-gray-300 shadow-sm focus:border-[#2C3E50] focus:ring-[#2C3E50] sm:text-sm px-4 py-3"></textarea>
+            </div>
+
+            <div class="flex items-center">
+                <input type="checkbox" id="categoryIsActive" name="is_active" checked
+                    class="rounded border-gray-300 text-[#2C3E50] focus:ring-[#2C3E50]">
+                <label for="categoryIsActive" class="ml-2 block text-sm text-gray-900">Active</label>
+            </div>
+
+            <!-- Hidden field for display_order with default value -->
+            <input type="hidden" name="display_order" value="0">
+
+            <div class="flex justify-end space-x-3 pt-4">
+                <button type="button" id="cancelCategoryBtn"
+                    class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg font-semibold hover:bg-gray-50 transition-colors">
+                    Cancel
+                </button>
+                <button type="submit" id="submitCategoryBtn"
+                    class="px-4 py-2 bg-[#2C3E50] text-white rounded-lg font-semibold hover:bg-[#34495E] transition-colors">
+                    Create Category
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
 
 <script>
     document.addEventListener('DOMContentLoaded', function () {
@@ -293,6 +359,96 @@
             // Calculate on load if values exist
             calculateMargin();
         }
+
+        // Category Modal Functionality
+        const modal = document.getElementById('categoryModal');
+        const openModalBtn = document.getElementById('openCategoryModalBtn');
+        const closeModalBtn = document.getElementById('closeCategoryModalBtn');
+        const cancelBtn = document.getElementById('cancelCategoryBtn');
+        const categoryForm = document.getElementById('categoryForm');
+        const categorySelect = document.querySelector('select[name="category"]');
+        const errorDiv = document.getElementById('categoryFormErrors');
+
+        function openModal() {
+            modal.classList.remove('hidden');
+            categoryForm.reset();
+            errorDiv.classList.add('hidden');
+        }
+
+        function closeModal() {
+            modal.classList.add('hidden');
+            categoryForm.reset();
+            errorDiv.classList.add('hidden');
+        }
+
+        openModalBtn.addEventListener('click', openModal);
+        closeModalBtn.addEventListener('click', closeModal);
+        cancelBtn.addEventListener('click', closeModal);
+
+        // Close modal when clicking outside
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) {
+                closeModal();
+            }
+        });
+
+        // Handle form submission
+        categoryForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const formData = new FormData(categoryForm);
+            const submitBtn = document.getElementById('submitCategoryBtn');
+
+            // Disable submit button
+            submitBtn.disabled = true;
+            submitBtn.textContent = 'Creating...';
+
+            fetch('{% url "catalog:category_create_ajax" %}', {
+                method: 'POST',
+                headers: {
+                    'X-CSRFToken': '{{ csrf_token }}'
+                },
+                body: formData
+            })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        // Add new category to dropdown
+                        const option = document.createElement('option');
+                        option.value = data.category.id;
+                        option.textContent = data.category.name;
+                        option.selected = true;
+                        categorySelect.appendChild(option);
+
+                        closeModal();
+
+                        // Show success message
+                        alert('Category "' + data.category.name + '" created successfully!');
+                    } else {
+                        // Display errors
+                        let errorHtml = '<ul class="list-disc pl-5">';
+                        for (let field in data.errors) {
+                            data.errors[field].forEach(error => {
+                                errorHtml += '<li>' + field + ': ' + error + '</li>';
+                            });
+                        }
+                        errorHtml += '</ul>';
+                        errorDiv.innerHTML = errorHtml;
+                        errorDiv.classList.remove('hidden');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    errorDiv.innerHTML = 'An error occurred while creating the category.';
+                    errorDiv.classList.remove('hidden');
+                })
+                .finally(() => {
+                    // Re-enable submit button
+                    submitBtn.disabled = false;
+                    submitBtn.textContent = 'Create Category';
+                });
+        });
     });
+
 </script>
 {% endblock %}

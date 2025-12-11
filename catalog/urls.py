@@ -11,4 +11,5 @@ urlpatterns = [
     path('products/<int:pk>/delete/', views.product_delete, name='product_delete'),
     path('products/export/', views.product_export, name='product_export'),
     path('products/import/', views.product_import, name='product_import'),
+    path('ajax/category/create/', views.category_create_ajax, name='category_create_ajax'),
 ]

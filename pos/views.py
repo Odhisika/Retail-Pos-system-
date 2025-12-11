@@ -31,6 +31,10 @@ class SaleViewSet(viewsets.ModelViewSet):
     @action(detail=False, methods=['post'])
     def create_sale(self, request):
         """Create a complete sale with items and payments"""
+        import logging
+        logger = logging.getLogger(__name__)
+        print(f"Received Sale Data: {request.data}")
+
         serializer = CreateSaleSerializer(data=request.data)
         if not serializer.is_valid():
             print(f"Create Sale Validation Errors: {serializer.errors}")
@@ -39,7 +43,6 @@ class SaleViewSet(viewsets.ModelViewSet):
         serializer.is_valid(raise_exception=True)
         
         data = serializer.validated_data
-        
         # Get or create customer based on phone number
         customer_phone = data.get('customer_phone')
         customer_name = data.get('customer_name')
