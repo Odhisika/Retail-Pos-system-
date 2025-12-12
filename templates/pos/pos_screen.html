@@ -180,19 +180,31 @@
       </div>
 
       <div class="space-y-1.5 pt-2 border-t border-gray-100">
+
         <div class="flex justify-between text-xs">
           <span class="text-gray-500">Subtotal</span>
           <span id="subtotal" class="font-semibold text-gray-700">{{ site_settings.currency_symbol }}0.00</span>
         </div>
+
         <div id="discountRow" class="flex justify-between text-xs text-green-600 hidden">
           <span class="font-medium">Discount</span>
           <span id="discountAmount" class="font-semibold">{{ site_settings.currency_symbol }}0.00</span>
         </div>
+
+        <!-- NEW: Tax row -->
+        <div id="taxRow" class="flex justify-between text-xs text-blue-600">
+          <span class="font-medium">Tax</span>
+          <span id="taxAmount" class="font-semibold">{{ site_settings.currency_symbol }}0.00</span>
+        </div>
+
+        <!-- UPDATED: Total includes Tax -->
         <div class="flex justify-between text-base font-bold pt-2 border-t border-gray-200">
           <span class="text-gray-900">Total</span>
           <span id="total" class="text-[#2C3E50]">{{ site_settings.currency_symbol }}0.00</span>
         </div>
+
       </div>
+
 
       <div class="space-y-2 pt-2">
         <button onclick="checkout()"
@@ -230,7 +242,7 @@
 
         <div class="space-y-1.5">
           <label class="block text-xs font-semibold text-gray-600 uppercase tracking-wide">Payment Method</label>
-          <select id="paymentMethod"
+          <select id="paymentMethod" onchange="toggleTenderedSection()"
             class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2C3E50] focus:border-transparent text-sm transition-all">
             <option value="cash">Cash</option>
             <option value="card">Card</option>
@@ -244,6 +256,7 @@
               class="w-full px-4 py-2.5 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#2C3E50] focus:border-transparent text-sm transition-all"
               oninput="calculateChange()" />
           </div>
+
         </div>
       </div>
 
@@ -287,6 +300,9 @@
         <span class="text-sm text-gray-600 font-semibold">Total Amount</span>
         <span id="modalTotal" class="text-2xl font-bold text-[#2C3E50]">{{ site_settings.currency_symbol }}0.00</span>
       </div>
+      <p class="text-sm text-gray-700 mt-2">
+        Amount required: <span id="requiredAmount" class="font-bold text-green-700">₵0.00</span>
+      </p>
 
       <div
         class="flex justify-between items-center py-3 px-4 bg-gradient-to-r from-green-50 to-emerald-50 rounded-lg border border-green-200">
@@ -335,6 +351,8 @@
     </div>
   </div>
 </div>
+
+
 
 <!-- EXISTING SCRIPTS - NO CHANGES TO FUNCTIONALITY -->
 <script>
@@ -838,20 +856,24 @@
             </div>
         `).join('');
 
+
     // Calculate totals
     const subtotal = cart.reduce((sum, item) => sum + (parseFloat(item.price) * item.quantity), 0);
-    let discount = 0;
 
+    // NEW: Calculate Tax
+    const taxTotal = cart.reduce((sum, item) => {
+      const itemTotal = parseFloat(item.price) * item.quantity;
+      return sum + (itemTotal * (item.tax_rate || 0));
+    }, 0);
+    let discount = 0;
     if (appliedCoupon) {
       if (appliedCoupon.type === 'percentage') {
         discount = subtotal * (appliedCoupon.value / 100);
       } else {
         discount = appliedCoupon.value;
       }
-
       // Ensure discount doesn't exceed subtotal
       if (discount > subtotal) discount = subtotal;
-
       discountRow.classList.remove('hidden');
       discountAmountEl.textContent = `-{{ site_settings.currency_symbol }}${discount.toFixed(2)}`;
       couponMessage.textContent = `Coupon applied: ${appliedCoupon.code}`;
@@ -860,11 +882,19 @@
       discountRow.classList.add('hidden');
       couponMessage.textContent = '';
     }
-
+    // Update UI
     subtotalEl.textContent = `{{ site_settings.currency_symbol }}${subtotal.toFixed(2)}`;
-    totalEl.textContent = `{{ site_settings.currency_symbol }}${(subtotal - discount).toFixed(2)}`;
-  }
 
+    // NEW: Update Tax Display
+    const taxAmountEl = document.getElementById('taxAmount');
+    if (taxAmountEl) {
+      taxAmountEl.textContent = `{{ site_settings.currency_symbol }}${taxTotal.toFixed(2)}`;
+    }
+
+    // NEW: Total includes Tax
+    const finalTotal = subtotal + taxTotal - discount;
+    totalEl.textContent = `{{ site_settings.currency_symbol }}${finalTotal.toFixed(2)}`;
+  }
   // Apply coupon
   function applyCoupon() {
     const code = document.getElementById('couponCode').value.trim();
@@ -924,6 +954,9 @@
       document.getElementById('customerPhone').value = selectedCustomerData.phone;
       lookupCustomer(selectedCustomerData.phone);
     }
+
+    // Initialize payment method UI
+    toggleTenderedSection();
 
     modal.classList.remove('hidden');
   }
@@ -1111,6 +1144,22 @@
     return emailRegex.test(email);
   }
 
+  // Toggle tendered section based on payment method
+  function toggleTenderedSection() {
+    const paymentMethod = document.getElementById('paymentMethod').value;
+    const tenderedSection = document.getElementById('tenderedSection');
+
+    if (paymentMethod === 'cash') {
+      tenderedSection.style.display = 'block';
+    } else {
+      tenderedSection.style.display = 'none';
+      // For card/mobile, set tendered to total automatically
+      const total = parseFloat(document.getElementById('modalTotal').textContent.replace(/[^0-9.-]+/g, ""));
+      document.getElementById('amountTendered').value = total.toFixed(2);
+      calculateChange();
+    }
+  }
+
   function calculateChange() {
     const total = parseFloat(document.getElementById('modalTotal').textContent.replace(/[^0-9.-]+/g, ""));
     const tendered = parseFloat(document.getElementById('amountTendered').value) || 0;
@@ -1128,39 +1177,54 @@
 
   function confirmSale() {
     const paymentMethod = document.getElementById('paymentMethod').value;
-    const tendered = parseFloat(document.getElementById('amountTendered').value);
     const total = parseFloat(document.getElementById('modalTotal').textContent.replace(/[^0-9.-]+/g, ""));
     const phone = document.getElementById('customerPhone').value;
-    // Validation for payment amount
+
+    // Get tendered amount
+    let tendered;
     if (paymentMethod === 'cash') {
+      tendered = parseFloat(document.getElementById('amountTendered').value);
       if (isNaN(tendered)) {
-        showToast('Please enter valid amount', 'error');
+        showToast('Please enter amount tendered', 'error');
         return;
       }
-      // Check for wholesale partial payment
-      if (selectedCustomerData && selectedCustomerData.customer_type === 'wholesale') {
-        const minPayment = total * 0.5;
-        if (tendered < minPayment - 0.01) {
-          showToast(`Wholesale customers must pay at least 50% (${minPayment.toFixed(2)})`, 'error');
-          return;
-        }
-      } else {
-        // Retail customers must pay full amount
-        if (tendered < total - 0.01) {
-          showToast('Insufficient amount tendered', 'error');
-          return;
-        }
+    } else {
+      // For card/mobile, payment equals total
+      tendered = total;
+    }
+
+    // Validation for payment amount
+    if (isNaN(tendered) || tendered <= 0) {
+      showToast('Please enter a valid payment amount', 'error');
+      return;
+    }
+
+    // Check for wholesale partial payment (only for cash)
+    if (paymentMethod === 'cash' && selectedCustomerData && selectedCustomerData.customer_type === 'wholesale') {
+      const minPayment = total * 0.5;
+      if (tendered < minPayment - 0.01) {
+        showToast(`Wholesale customers must pay at least 50% (₵${minPayment.toFixed(2)})`, 'error');
+        return;
+      }
+    } else if (paymentMethod === 'cash') {
+      // Retail customers paying cash must provide sufficient amount
+      if (tendered < total - 0.01) {
+        showToast('Insufficient amount tendered', 'error');
+        return;
       }
     }
+
     if (!phone) {
       showToast('Please enter customer phone number', 'warning');
       return;
     }
+
     // Determine actual payment amount (handle partial vs full/change)
     let paymentAmount = total;
     if (tendered < total) {
       paymentAmount = tendered; // Partial payment
     }
+
     // Determine customer name properly
     let customerName;
     if (selectedCustomerData) {
@@ -1173,11 +1237,12 @@
       // Fallback - should not happen
       customerName = `Customer ${phone}`;
     }
+
     const saleData = {
       items: cart.map(item => ({
         product_id: item.id,
         quantity: item.quantity,
-        discount: 0 // Item level discount if any
+        discount: 0
       })),
       payments: [{
         method: paymentMethod,
@@ -1189,8 +1254,10 @@
       customer_name: customerName,
       customer_email: selectedCustomerData ? (selectedCustomerData.email || '') : '',
       discount: appliedCoupon ? (appliedCoupon.type === 'percentage' ? 0 : appliedCoupon.value) : 0,
+      coupon_code: appliedCoupon ? appliedCoupon.code : null,
       notes: ''
     };
+
     fetch('/api/sales/create_sale/', {
       method: 'POST',
       headers: {
@@ -1199,12 +1266,19 @@
       },
       body: JSON.stringify(saleData)
     })
-      .then(response => response.json())
+      .then(response => {
+        if (!response.ok) {
+          return response.json().then(err => {
+            console.error('API Error:', err);
+            throw new Error(err.error || 'Failed to create sale');
+          });
+        }
+        return response.json();
+      })
       .then(data => {
         if (data.id) {
           showToast('Sale completed successfully', 'success');
           if (document.getElementById('printReceipt').checked) {
-            // Open receipt in new window
             window.open(`/pos/sales/${data.id}/receipt/`, '_blank');
           }
           cart = [];
@@ -1212,8 +1286,6 @@
           saveCart();
           renderCart();
           closeCheckoutModal();
-          // Clear customer selection if it was a one-off
-          // Or keep it? Let's keep it for now as per POS standard
         } else {
           showToast(data.error || 'Error completing sale', 'error');
         }

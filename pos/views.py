@@ -98,26 +98,39 @@ class SaleViewSet(viewsets.ModelViewSet):
         # Calculate totals
         sale.calculate_totals()
         
-        # Create payments
-        total_payment = 0
+        # Create payments and validate amounts
+        total_payment = Decimal('0')
+        total_tendered = Decimal('0')
+        
         for payment_data in data['payments']:
             amount = Decimal(str(payment_data['amount']))
+            amount_tendered = payment_data.get('amount_tendered')
+            
+            # For cash payments, use amount_tendered for validation
+            if payment_data['method'] == 'cash' and amount_tendered is not None:
+                total_tendered += Decimal(str(amount_tendered))
+            else:
+                # For card/mobile, the amount tendered equals the amount paid
+                total_tendered += amount
+                
             total_payment += amount
+            
             Payment.objects.create(
                 sale=sale,
                 amount=amount,
                 method=payment_data['method'],
                 status=Payment.Status.COMPLETED,
-                amount_tendered=payment_data.get('amount_tendered'),
-                change_amount=payment_data.get('change_amount')
+                amount_tendered=Decimal(str(amount_tendered)) if amount_tendered is not None else amount,
+                change_amount=Decimal(str(payment_data.get('change_amount', 0)))
             )
 
         # Validate payment based on customer type
         if customer.customer_type == 'wholesale':
             min_payment = sale.total * Decimal('0.5')
+            # For wholesale, check the actual payment amount (not tendered)
             if total_payment < min_payment:
-                 return Response(
-                    {'error': f'Wholesale customers must pay at least 50% ({min_payment})'},
+                return Response(
+                    {'error': f'Wholesale customers must pay at least 50% (₵{min_payment:.2f})'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
             
@@ -129,10 +142,11 @@ class SaleViewSet(viewsets.ModelViewSet):
                 customer.current_balance += remaining_balance
                 customer.save()
         else:
-            # Retail customers must pay full amount
-            if total_payment < sale.total:
-                 return Response(
-                    {'error': 'Insufficient payment amount'},
+            # Retail customers must tender sufficient amount (for cash) or pay full (for card/mobile)
+            # Check if they tendered enough money (important for cash payments)
+            if total_tendered < sale.total:
+                return Response(
+                    {'error': f'Insufficient payment amount. Required: ₵{sale.total:.2f}, Tendered: ₵{total_tendered:.2f}'},
                     status=status.HTTP_400_BAD_REQUEST
                 )
         
@@ -143,21 +157,6 @@ class SaleViewSet(viewsets.ModelViewSet):
             SaleSerializer(sale).data,
             status=status.HTTP_201_CREATED
         )
-    
-    @action(detail=True, methods=['post'])
-    def void(self, request, pk=None):
-        """Void a sale"""
-        sale = self.get_object()
-        reason = request.data.get('reason', '')
-        
-        try:
-            sale.void_sale(request.user, reason)
-            return Response({'status': 'sale voided'})
-        except ValueError as e:
-            return Response(
-                {'error': str(e)},
-                status=status.HTTP_400_BAD_REQUEST
-            )
 
 
 @login_required
